@@ -535,14 +535,14 @@ end
 
 -- ugly hack fix for the vigor widget not disappearing when it should
 LibAdvFlight.RegisterCallback(LibAdvFlight.Events.ADV_FLYING_DISABLED, function()
-    for _, v in ipairs(DR.WidgetFrameIDs) do
-        C_Timer.After(1, function()
-            local f = UIWidgetPowerBarContainerFrame.widgetFrames[v];
-            if f and f:IsShown() then
-                f:Hide();
-            end
-        end);
-    end
+	for _, v in ipairs(DR.WidgetFrameIDs) do
+		C_Timer.After(1, function()
+			local f = UIWidgetPowerBarContainerFrame.widgetFrames[v];
+			if f and f:IsShown() then
+				f:Hide();
+			end
+		end);
+	end
 end);
 
 function DR.SetupVigorToolip()
@@ -1057,6 +1057,7 @@ function DR.clearPositions()
 	for i = 1, 10 do
 		DR.charge[i]:Hide();
 	end
+	DR.toggleModels()
 end
 
 DR.clearPositions();

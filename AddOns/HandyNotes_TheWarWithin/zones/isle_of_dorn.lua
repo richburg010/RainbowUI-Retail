@@ -43,7 +43,7 @@ map.nodes[23335817] = Rare({
     note = L['alunira_note'],
     rewards = {
         Achievement({id = 40435, criteria = 68225}),
-        Reputation({id = 2590, gain = 150, quest = 82196}),
+        Reputation({id = 2590, gain = 150, quest = 85158}),
         Mount({item = 223270, id = 2176}) -- Alunira
     }
 }) -- Alunira
@@ -332,7 +332,7 @@ map.nodes[56833477] = Rare({
 map.nodes[59122348] = Treasure({ -- You may have to wait until it spawns.
     quest = 82715,
     -- vignette = 6293,
-    note = L['in_building'] .. '' .. L['web_wrapped_axe_note'],
+    note = L['in_building'] .. ' ' .. L['web_wrapped_axe_note'],
     rewards = {
         Achievement({id = 40434, criteria = 68209}),
         Reputation({id = 2590, gain = 150, quest = 82715}),
@@ -497,6 +497,17 @@ dor.nodes[58283026] = TurtlesThanks({
     -- vignette = 6246
     note = L['turtles_thanks_3_note']
 })
+
+map.nodes[31445130] = Treasure({
+    quest = 83094,
+    label = '{npc:225537}',
+    requires = {
+        ns.requirement.Reputation(1272, 33600, false, true),
+        ns.requirement.Quest(30526)
+    },
+    note = L['faithful_dog_note'],
+    rewards = {Pet({item = 224766, id = 4596})}
+}) -- Faithful Dog
 
 -------------------------------------------------------------------------------
 

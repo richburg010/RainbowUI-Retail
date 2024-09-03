@@ -1,14 +1,14 @@
-# [1.8.1](https://github.com/sragia/Exlist/tree/1.8.1) (2024-07-25)
+# [1.8.4](https://github.com/sragia/Exlist/tree/1.8.4) (2024-09-02)
 
-[Full Changelog](https://github.com/sragia/Exlist/compare/1.8.0...1.8.1)
+[Full Changelog](https://github.com/sragia/Exlist/compare/1.8.3...1.8.4)
 
 ## Highlights
 
- Small typo fix for accountsync 
+ Fix for hanging up on login 
 
 ## Commits
 
 Aigars Bedeicis (1):
 
-- Fix typo
+- Temp fix for DF checking until I find proper solution
 

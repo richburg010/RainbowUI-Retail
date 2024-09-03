@@ -1357,9 +1357,9 @@ D["JsFilter"] = {
 	desc = "在預組隊伍視窗上方新增過濾方式，可以篩選是否要看到簡體中文和英文的隊伍。``|cffFF2D2D特別注意：切換過濾方式後，需要按一下重新搜尋按鈕，隊伍列表才會更新。|r`",
 };
 D["KeyMaster"] = {
-    defaultEnable = 0,
+    defaultEnable = 1,
 	tags = { "BOSSRAID" },
-	title = "(暫時停用) M+ 鑰石大師",
+	title = "M+ 鑰石大師",
 	desc = "顯示你和隊友的 M+ 詳細資訊，有非常清楚漂亮的介面。`",
     {
         text = "打開主視窗",
@@ -2420,6 +2420,20 @@ D["TargetNameplateIndicator"] = {
 	{
         text = "設定選項",
         callback = function() SlashCmdList["ACECONSOLE_TNI"]("") end,
+    },
+};
+D["TeleportMenu"] = {
+	defaultEnable = 1,
+	tags = { "ENHANCEMENT" },
+	title = "傳送選單",
+	desc = "在 Esc 遊戲選單旁邊顯示各種爐石/傳送法術的按鈕。`",
+	modifier = "BNS, 彩虹ui",
+	img = true,
+	{
+        text = "設定選項",
+        callback = function() 
+			Settings.OpenToCategory("TeleportMenu")
+		end,
     },
 };
 D["TidyPlates_ThreatPlates"] = {

@@ -1151,6 +1151,10 @@ function WorldQuestTracker.UpdateWorldWidget(widget, questID, numObjectives, map
 	if (okay) then
 		local conduitType, borderTexture, borderColor, itemLink = WorldQuestTracker.GetConduitQuestData(questID)
 		WorldQuestTracker.UpdateBorder(widget, rarity, worldQuestType, nil, nil, nil, conduitType, borderTexture, borderColor, itemLink)
+	else
+		widget.texture:SetTexture([[Interface\Icons\INV_Misc_QuestionMark]])
+		widget.amountText:SetText("")
+		widget.IconText = ""
 	end
 
 	return okay, amountGold, amountResources, amountAPower
@@ -1208,7 +1212,7 @@ function WorldQuestTracker.UpdateWorldQuestsOnWorldMap(noCache, showFade, isQues
 		--> show a message telling why world quests aren't shown
 		if (WorldQuestTracker.db.profile and not WorldQuestTracker.db.profile.low_level_tutorial) then
 			WorldQuestTracker.db.profile.low_level_tutorial = true
-			WorldQuestTracker:Msg("World quests aren't shown because you're below level 50.") --> localize-me
+			WorldQuestTracker:Msg(L["World quests aren't shown because you're below level 50."]) --> localize-me
 		end
 		return
 	end
