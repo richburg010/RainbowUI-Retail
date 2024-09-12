@@ -8734,7 +8734,15 @@ do
                                     width = 2,
                                     order = 2,
                                         },
-                                    },
+                                    
+                                supportedSpecs = {
+                                    type = "description",
+                                    name = "支援專精: 敏銳、刺殺、增強、毀滅",
+                                    desc = "",
+                                    width = "full",
+                                    order = 3,
+                                        },
+                                },
                         },
 
 								--[[ potLineBreak1 = {

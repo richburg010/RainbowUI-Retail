@@ -121,8 +121,8 @@ function CraftSim.INIT:HookToEvent()
 			local professionInfo = C_TradeSkillUI.GetChildProfessionInfo()
 			local professionRecipeIDs = C_TradeSkillUI.GetAllRecipeIDs()
 
-			--CraftSim.INIT:TriggerRecipeOperationInfoLoadForProfession(professionRecipeIDs,
-			--	professionInfo.profession)
+			CraftSim.INIT:TriggerRecipeOperationInfoLoadForProfession(professionRecipeIDs,
+				professionInfo.profession)
 			CraftSim.INIT:TriggerModuleUpdate(true)
 
 			local recipeID = recipeInfo.recipeID
@@ -191,6 +191,10 @@ function CraftSim.INIT:InitCraftRecipeHooks()
 		local isRecraft = false
 
 		local print = CraftSim.DEBUG:SetDebugPrint(CraftSim.CONST.DEBUG_IDS.CRAFTQ)
+
+		if C_TradeSkillUI.IsNPCCrafting() or C_TradeSkillUI.IsRuneforging() or C_TradeSkillUI.IsTradeSkillLinked() or C_TradeSkillUI.IsTradeSkillGuild() then
+			return
+		end
 
 		---@type CraftSim.RecipeData
 		local recipeData

@@ -65,6 +65,49 @@ GTFO.SpellID["435440"] = {
   ignoreApplication = true;
 };
 
+GTFO.SpellID["455915"] = {
+  --desc = "Congealed Goop (Oozemodius)";
+  sound = 1;
+};
+
+GTFO.SpellID["462985"] = {
+  --desc = "Magma Puddle";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["432458"] = {
+  --desc = "Itching Waters";
+  applicationOnly = true;
+  sound = 2;
+};
+
+GTFO.SpellID["433301"] = {
+  --desc = "Parasitic Infestation";
+	soundFunction = function() 
+		-- Alert if hit more than 5 times
+		if (not GTFO.VariableStore.ParasiticInfestation) then
+			GTFO.VariableStore.ParasiticInfestation = 0;
+		end
+		local stacks = tonumber(GTFO_DebuffStackCount("player", 433301));
+		if (stacks ~= GTFO.VariableStore.ParasiticInfestation) then
+			GTFO.VariableStore.ParasiticInfestation = stacks;
+			return 0;
+		end
+		return 1;
+	end;
+};
+
+GTFO.SpellID["454901"] = {
+  --desc = "Sundered Wrath (Surek'Tak the Sundered)";
+  sound = 1;
+};
+
+GTFO.SpellID["452261"] = {
+  --desc = "Black Blood Vial (Harvest Warden Izk'tilak)";
+  sound = 1;
+};
+
 --- ****************************
 --- * Ara-Kara, City of Echoes *
 --- ****************************
@@ -195,6 +238,13 @@ GTFO.SpellID["426265"] = {
 
 GTFO.SpellID["421638"] = {
   --desc = "Wicklighter Barrage (Blazikon)";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["424223"] = {
+  --desc = "Incite Flames (Blazikon)";
+  ignoreApplication = true;
   sound = 1;
 };
 
@@ -480,11 +530,88 @@ GTFO.SpellID["463426"] = {
   sound = 1;
 };
 
+GTFO.SpellID["458836"] = {
+  --desc = "Shadowspin (Speaker Xanventh)";
+  sound = 1;
+};
+
 --- *******************
 --- * Nerub-ar Palace *
 --- *******************
 
--- TODO: Stalkers Netting (Ulgrax the Devourer) - Negate for players with Digestive Venom
+GTFO.SpellID["441402"] = {
+  --desc = "Concentrated Cold (Hollow Frostweaver)";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["434275"] = {
+  --desc = "Black Blood";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["445518"] = {
+  --desc = "Black Blood";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["448148"] = {
+  --desc = "Black Blood (Blood Collector)";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["440904"] = {
+  --desc = "Devour (Ulgrax the Devourer)";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["450130"] = {
+  --desc = "Slip 'n Slime";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["441116"] = {
+  --desc = "Heaving Retch (Regurgitating Monstrosity)";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["459785"] = {
+  --desc = "Cosmic Residue";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["454832"] = {
+  --desc = "Poison Breath (Caustic Skyrazor)";
+  sound = 1;
+};
+
+GTFO.SpellID["439776"] = {
+  --desc = "Acid Pools (Rasha'nan)";
+  sound = 1;
+  ignoreApplication = true;
+};
+
+GTFO.SpellID["437786"] = {
+  --desc = "Atomized (Nexus-Princess Ky'veza)";
+  sound = 1;
+};
+
+GTFO.SpellID["463071"] = {
+  --desc = "Sanguine Overflow (Brood Infuser)";
+  sound = 1;
+};
+
+GTFO.SpellID["442799"] = {
+  --desc = "Sanguine Overflow (Broodtwister Ovi'nax)";
+  sound = 1;
+};
 
 end
 

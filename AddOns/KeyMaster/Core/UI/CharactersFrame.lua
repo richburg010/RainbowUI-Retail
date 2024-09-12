@@ -329,7 +329,7 @@ function CharactersFrame:CreateCharacters()
             local characterRow = _G["KM_CharacterRow_"..guid] or CharactersFrame:CreateCharacterRow(guid)
             -- set display order of the rows
             if prevRowAnchor == nil then
-                characterRow:SetPoint("TOPLEFT", _G["KM_CharacterSelectFrame"], "TOPLEFT", mlr, -mtb)
+                characterRow:SetPoint("TOPLEFT", _G["KM_CharacterList"], "TOPLEFT", mlr, -mtb)
             else
                 characterRow:SetPoint("TOP", prevRowAnchor, "BOTTOM", 0, -mtb)
             end
@@ -365,6 +365,8 @@ end
 function CharactersFrame:Initialize(parentFrame)
     local characterSelectFrame = _G["KM_CharacterSelectFrame"] or createCharacterSelectFrame(parentFrame)
 
+    -- clean up any old data in saved variables
+    KeyMaster_C_DB = KeyMaster:CleanCharSavedData(KeyMaster_C_DB)
     CharactersFrame:CreateCharacters()
 
     return characterSelectFrame

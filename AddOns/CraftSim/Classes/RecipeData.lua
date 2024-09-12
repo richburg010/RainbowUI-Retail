@@ -440,10 +440,20 @@ function CraftSim.RecipeData:SetOptionalReagents(itemIDList)
     self:Update()
 end
 
+--- also sets a sparkReagentItem if not yet set
 function CraftSim.RecipeData:SetNonQualityReagentsMax()
     for _, reagent in pairs(self.reagentData.requiredReagents) do
         if not reagent.hasQuality then
             reagent.items[1].quantity = reagent.requiredQuantity
+        end
+    end
+
+    if self.reagentData:HasSparkSlot() then
+        if not self.reagentData.sparkReagentSlot.activeReagent then
+            local firstPossibleSparkItem = self.reagentData.sparkReagentSlot.possibleReagents[1]
+            if firstPossibleSparkItem then
+                self.reagentData.sparkReagentSlot:SetReagent(firstPossibleSparkItem.item:GetItemID())
+            end
         end
     end
 end
@@ -458,28 +468,29 @@ function CraftSim.RecipeData:GetConcentrationCost()
     -- try to only enable it for simulation mode?
     if self.concentrationCurveData and CraftSim.SIMULATION_MODE.isActive then
         -- get skill bracket and associated start and end skillCurveValues
-        local playerSkill = self.professionStats.skill.value
-        local baseDifficulty = self.baseOperationInfo.baseDifficulty
-        local playerSkillFactor = (playerSkill / (baseDifficulty / 100)) / 100
+        local recipeDifficulty = self.professionStats.recipeDifficulty.value
+        local playerSkill = math.min(self.professionStats.skill.value, recipeDifficulty) -- cap skill at max difficulty
+        local playerSkillFactor = (playerSkill / (recipeDifficulty / 100)) / 100
         local specExtraValues = self.specializationData:GetExtraValues()
-        local lessConcentrationUsageFactor = specExtraValues.ingenuity:GetExtraValue(2)
+        local lessConcentrationFactorSpecs = specExtraValues.ingenuity:GetExtraValue(2)
         local optionalReagentStats = self.reagentData:GetProfessionStatsByOptionals()
-        local lessConcentrationUsageFactor2 = optionalReagentStats.ingenuity:GetExtraValue(2)
+        local professionGearStats = self.professionGearSet.professionStats
+        local lessConcentrationFactorOptionals = optionalReagentStats.ingenuity:GetExtraValue(2)
+        local lessConcentrationFactorGear = professionGearStats.ingenuity:GetExtraValue(2)
 
-        -- recipeDifficulty here or playerSkill ?
         local curveConstantData, nextCurveConstantData = CraftSim.UTIL:FindBracketData(playerSkill,
             self.concentrationCurveData.costConstantData)
         local curveData, nextCurveData = CraftSim.UTIL:FindBracketData(playerSkillFactor,
             self.concentrationCurveData.curveData)
 
-        local curveConstant = CraftSim.UTIL:CalculateCurveConstant(baseDifficulty, curveConstantData,
+        local curveConstant = CraftSim.UTIL:CalculateCurveConstant(recipeDifficulty, curveConstantData,
             nextCurveConstantData)
         local recipeDifficultyFactor = (curveData and curveData.index) or 0
         local nextRecipeDifficultyFactor = (nextCurveData and nextCurveData.index) or 1
         local skillCurveValueStart = (curveData and curveData.data) or 0
         local skillCurveValueEnd = (nextCurveData and nextCurveData.data) or 1
-        local skillStart = baseDifficulty * recipeDifficultyFactor
-        local skillEnd = baseDifficulty * nextRecipeDifficultyFactor
+        local skillStart = recipeDifficulty * recipeDifficultyFactor
+        local skillEnd = recipeDifficulty * nextRecipeDifficultyFactor
 
         return CraftSim.UTIL:CalculateConcentrationCost(
             curveConstant,
@@ -487,7 +498,8 @@ function CraftSim.RecipeData:GetConcentrationCost()
             skillStart,
             skillEnd,
             skillCurveValueStart,
-            skillCurveValueEnd, { lessConcentrationUsageFactor, lessConcentrationUsageFactor2 })
+            skillCurveValueEnd,
+            { lessConcentrationFactorSpecs, lessConcentrationFactorOptionals, lessConcentrationFactorGear })
     else
         -- if by any chance the data for this recipe is not mapped in the db2 data, get a good guess via the api
         -- or if we are not in the current beta (08.08.2024)
@@ -762,8 +774,12 @@ function CraftSim.RecipeData:GetForgeFinderExport(indent)
     jb:Add("reagents", reagents) -- itemID mapped to required quantity
     if self.supportsQualities then
         print("json, adding skill: ")
-        jb:Add("skill", self.professionStats.skill.value)                     -- skill without reagent bonus TODO: if single export, consider removing reagent bonus
-        jb:Add("difficulty", self.baseProfessionStats.recipeDifficulty.value) -- base difficulty (without optional reagents)
+        jb:Add("skill", self.professionStats.skill.value)                               -- skill without reagent bonus TODO: if single export, consider removing reagent bonus
+        if self.supportsMulticraft or self.supportsResourcefulness then
+            jb:Add("difficulty", self.baseProfessionStats.recipeDifficulty.value)       -- base difficulty (without optional reagents)
+        else
+            jb:Add("difficulty", self.baseProfessionStats.recipeDifficulty.value, true) -- base difficulty (without optional reagents)
+        end
     end
     if self.supportsCraftingStats then
         if self.supportsMulticraft then
@@ -790,20 +806,28 @@ function CraftSim.RecipeData:GetEasycraftExport(indent)
     jb:AddList("itemIDs", GUTIL:Map(self.resultData.itemsByQuality, function(item)
         return item:GetItemID()
     end))
+
+    local optionalReagentsSlotStatus = {}
+    for _, reagent in pairs(self.reagentData.optionalReagentSlots) do
+        if reagent.mcrSlotID then
+            optionalReagentsSlotStatus[reagent.mcrSlotID] = reagent.locked
+        end
+    end
+    jb:Add("optionalReagentsSlotStatus", optionalReagentsSlotStatus)
+
     local reagents = {}
     for _, reagent in pairs(self.reagentData.requiredReagents) do
         for _, reagentItem in pairs(reagent.items) do
             reagents[reagentItem.item:GetItemID()] = reagent.requiredQuantity
         end
     end
+    jb:Add("reagents", reagents) -- itemID mapped to required quantity
 
     local professionStatsForExport = self.professionStats:Copy()
     professionStatsForExport:subtract(self.buffData.professionStats)
 
-    jb:Add("spellID", self.recipeID)
     jb:Add("expectedQuality", self.resultData.expectedQuality)
     jb:Add("expectedQualityConcentration", self.resultData.expectedQualityConcentration)
-    jb:Add("reagents", reagents) -- itemID mapped to required quantity
     if self.supportsQualities then
         print("json, adding skill: ")
         jb:Add("skill", self.professionStats.skill.value)                     -- skill without reagent bonus TODO: if single export, consider removing reagent bonus
@@ -814,15 +838,16 @@ function CraftSim.RecipeData:GetEasycraftExport(indent)
     if self.supportsCraftingStats then
         if self.supportsMulticraft then
             if not self.supportsResourcefulness then
-                jb:Add("multicraft", professionStatsForExport.multicraft:GetPercent(true), true)
+                jb:Add("multicraft", professionStatsForExport.multicraft:GetPercent(true))
             else
                 jb:Add("multicraft", professionStatsForExport.multicraft:GetPercent(true))
             end
         end
         if self.supportsResourcefulness then
-            jb:Add("resourcefulness", professionStatsForExport.resourcefulness:GetPercent(true), true)
+            jb:Add("resourcefulness", professionStatsForExport.resourcefulness:GetPercent(true))
         end
     end
+    jb:Add("spellID", self.recipeID, true)
     jb:End()
 
     return jb.json

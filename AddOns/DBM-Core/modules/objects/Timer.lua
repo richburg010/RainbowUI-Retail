@@ -114,10 +114,14 @@ local timerTypeSimplification = {
 	["ai"] = "cd",
 	["adds"] = "cd",
 	["addscustom"] = "cd",
-	["cdnp"] = "cd",
-	["cdpnp"] = "cd",
-	["nextnp"] = "cd",
-	["nextpnp"] = "cd",
+
+	--All nameplate only timers, be they approx or exact or ai cooldowns, or nameplate only cast timers
+	--CDs all map to cdnp but cast maps to castnp
+	["cdnp"] = "cdnp",
+	["cdpnp"] = "cdnp",
+	["nextnp"] = "cdnp",
+	["nextpnp"] = "cdnp",
+	["castpnp"] = "castnp",
 
 	--RPs all map to "warmup"
 	["roleplay"] = "warmup",
@@ -140,7 +144,6 @@ local timerTypeSimplification = {
 	["active"] = "cast",--Active bars are usually things like Whirlwind is active on the boss, or a channeled cast is being done. so effectively it's for channeled casts, as upposed to regular casts
 	["castsource"] = "cast",
 	["castcount"] = "cast",
-	["castpnp"] = "cast",
 }
 
 --Very similar to above but more specific to key replacement and not type replacement, to match BW behavior for unification of WAs
@@ -283,7 +286,7 @@ function timerPrototype:Start(timer, ...)
 				playCountdown(id, timer, countVoice, countVoiceMax, self.requiresCombat)--timerId, timer, voice, count
 			end
 		end
-		local bar = DBT:CreateBar(timer, id, self.icon, self.startLarge, nil, nil, nil, colorId, nil, self.keep, self.fade, countVoice, countVoiceMax, self.simpType == "cd")
+		local bar = DBT:CreateBar(timer, id, self.icon, self.startLarge, nil, nil, nil, colorId, nil, self.keep, self.fade, countVoice, countVoiceMax, self.simpType == "cd" or self.simpType == "cdnp")
 		if not bar then
 			return false, "error" -- creating the timer failed somehow, maybe hit the hard-coded timer limit of 15
 		end
@@ -499,7 +502,7 @@ function timerPrototype:Stop(...)
 				end
 				--Mods that have specifically flagged that it's safe to assume all timers from that boss mod belong to boss1
 				--This check is performed secondary to args scan so that no adds guids are overwritten
-				if not guid and self.mod.sendMainBossGUID and not DBM.Options.DontSendBossGUIDs and (self.type == "cd" or self.type == "next" or self.type == "cdcount" or self.type == "nextcount" or self.type == "cdspecial" or self.type == "ai") then
+				if not guid and self.mod.sendMainBossGUID and DBM.Options.DontSendBossGUIDs and (self.type == "cd" or self.type == "next" or self.type == "cdcount" or self.type == "nextcount" or self.type == "cdspecial" or self.type == "ai") then
 					guid = UnitGUID("boss1")
 				end
 				DBM:FireEvent("DBM_TimerStop", id, guid)
@@ -966,7 +969,7 @@ local function newTimer(self, timerType, timer, spellId, timerText, optionDefaul
 			g = g,
 			b = b,
 			requiresCombat = requiresCombat,
-			isPriority = isPriority,
+			isPriority = isPriority or false,
 			allowdouble = allowdouble,
 			startedTimers = {},
 			mod = self,

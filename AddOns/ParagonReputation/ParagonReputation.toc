@@ -1,7 +1,7 @@
 ## Interface: 110002
 ## Title: |cff0088eeParagon|r Reputation
 ## Author: |cffabd473Fail|r |cffff4000US-Ragnaros|r
-## Version: 1.56
+## Version: 1.57
 ## Notes: Better visualization of Paragon Factions on the Reputation Frame.
 ## IconTexture: 3753261
 ## DefaultState: Enabled
@@ -11,6 +11,7 @@
 ## Title-zhTW: |cff0099FF[介面]|r 巔峰聲望
 ## Notes-zhTW: |cff0088eeParagon|r Reputation |n|n顯示巔峰聲望進度、聲望獎勵的收集進度，以及領取巔峰箱的通知。|n|n|cffffd200使用方法: |r從Esc>選項>插件>聲望，進行設定。
 ## X-Category-zhTW: 介面
+## DefaultState: disabled
 
 data.lua
 localization.lua

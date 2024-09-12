@@ -194,33 +194,113 @@ function addonTable.Utilities.GetMoneyString(amount, splitThousands)
   return result
 end
 
+function addonTable.Utilities.AddGeneralDropSlot(parent, getData, bagIndexes)
+  local function UpdateVisibility()
+    if parent.isLive then
+      local cursorType, itemID = GetCursorInfo()
+      parent.backgroundButton:SetShown(cursorType == "item")
+      parent.backgroundButton:SetFrameLevel(parent.ScrollBox:GetFrameLevel() + 1)
+    else
+      parent.backgroundButton:Hide()
+    end
+  end
+  if parent.backgroundButton then
+    UpdateVisibility()
+    return
+  end
+
+  local pool = parent.liveItemButtonPool or addonTable.ItemViewCommon.GetLiveItemButtonPool(parent)
+
+  local indexFrame = CreateFrame("Frame", nil, parent.Container)
+  parent.backgroundButton = pool:Acquire()
+  parent.backgroundButton:SetParent(indexFrame)
+  parent.backgroundButton:SetMotionScriptsWhileDisabled(true)
+  parent.backgroundButton:ClearAllPoints()
+  parent.backgroundButton:SetAllPoints(parent.Container, true)
+  parent.backgroundButton:ClearHighlightTexture()
+  parent.backgroundButton:ClearNormalTexture()
+  parent.backgroundButton:ClearDisabledTexture()
+  parent.backgroundButton:ClearPushedTexture()
+  for _, child in ipairs({parent.backgroundButton:GetRegions()}) do
+    child:Hide()
+  end
+
+  UpdateVisibility()
+  parent.backgroundButton:RegisterEvent("CURSOR_CHANGED")
+  parent.backgroundButton:SetScript("OnEvent", UpdateVisibility)
+
+  parent.backgroundButton:SetScript("OnEnter", nil)
+  parent.backgroundButton:SetScript("OnLeave", nil)
+  parent.backgroundButton:SetScript("PreClick", function(self)
+    local cursorType, itemID = GetCursorInfo()
+    if cursorType == "item" then
+      local usageChecks = addonTable.Sorting.GetBagUsageChecks(bagIndexes)
+      local sortedBagIDs = CopyTable(bagIndexes)
+      table.sort(sortedBagIDs, function(a, b) return usageChecks.sortOrder[a] < usageChecks.sortOrder[b] end)
+      local currentCharacterBags = getData()
+      local backupBagID = nil
+      for _, bagID in ipairs(sortedBagIDs) do
+        if not usageChecks.checks[bagID] or usageChecks.checks[bagID]({itemID = itemID}) then
+          local bag = currentCharacterBags[tIndexOf(bagIndexes, bagID)]
+          for index, slot in ipairs(bag) do
+            if slot.itemID == nil then
+              self:Enable()
+              self:SetID(index)
+              self:GetParent():SetID(bagID)
+              return
+            end
+          end
+        end
+        if not usageChecks.checks[bagID] then
+          backupBagID = usageChecks.checks[bagID]
+        end
+      end
+      self:Disable()
+      self:SetID(1)
+      self:GetParent():SetID(backupBagID or sortedBagIDs[1])
+    end
+  end)
+end
+
+function addonTable.Utilities.AddScrollBar(self)
+  self.ScrollBox = CreateFrame("Frame", nil, self, "WowScrollBox")
+  self.ScrollBar = CreateFrame("EventFrame", nil, self, "MinimalScrollBar")
+  addonTable.Skins.AddFrame("TrimScrollBar", self.ScrollBar)
+  self.ScrollChild = CreateFrame("Frame", nil, self.ScrollBox)
+  self.ScrollChild.scrollable = true
+  self.Container:SetParent(self.ScrollChild)
+  self.Container:ClearAllPoints()
+  -- Offset is to prevent default item buttons getting edges cropped on edges of
+  -- container
+  self.Container:SetPoint("TOPLEFT", 2, -2)
+  ScrollUtil.InitScrollBoxWithScrollBar(self.ScrollBox, self.ScrollBar, CreateScrollBoxLinearView())
+  ScrollUtil.AddManagedScrollBarVisibilityBehavior(self.ScrollBox, self.ScrollBar)
+
+  function self:UpdateScroll(ySaved, scale)
+    local sideSpacing, topSpacing = addonTable.Utilities.GetSpacing()
+    self.ScrollBox:ClearAllPoints()
+    self.ScrollBox:SetPoint("TOPLEFT", sideSpacing + addonTable.Constants.ButtonFrameOffset - 2 - 2, -50 - topSpacing / 4 + 2)
+    self.ScrollChild:SetWidth(self.Container:GetWidth() + 4)
+    self.ScrollChild:SetHeight(self.Container:GetHeight() + 4)
+    self.ScrollBox:SetSize(
+      self.Container:GetWidth() + 4,
+      math.min(
+        self.Container:GetHeight() + 4,
+        UIParent:GetHeight() / scale - ySaved
+      )
+    )
+    self.ScrollBox:FullUpdate(ScrollBoxConstants.UpdateImmediately)
+    if self.ScrollBar:IsShown() then
+      self.ScrollBar:SetPoint("TOPLEFT", self.ScrollBox, "TOPRIGHT", 7 + sideSpacing / 2 - 2, -2)
+      self.ScrollBar:SetPoint("BOTTOMLEFT", self.ScrollBox, "BOTTOMRIGHT", 7 + sideSpacing / 2 - 2, 2)
+      self:SetWidth(self:GetWidth() + 10 + sideSpacing / 2)
+    end
+  end
+end
+
 function addonTable.Utilities.GetExternalSortMethodName()
   local sortsDetails = addonTable.API.ExternalContainerSorts[addonTable.Config.Get(addonTable.Config.Options.SORT_METHOD)]
   return sortsDetails and BAGANATOR_L_USING_X:format(sortsDetails.label)
-end
-
-function addonTable.Utilities.GetGuildSortMethodName()
-  local sortsDetails = addonTable.API.ExternalGuildBankSorts[addonTable.Config.Get(addonTable.Config.Options.GUILD_BANK_SORT_METHOD)]
-  return sortsDetails and BAGANATOR_L_USING_X:format(sortsDetails.label)
-end
-
-function addonTable.Utilities.AutoSetGuildSortMethod()
-  local method = addonTable.Config.Get(addonTable.Config.Options.GUILD_BANK_SORT_METHOD)
-  if not addonTable.API.ExternalGuildBankSorts[method] then
-    if method == "unset" and next(addonTable.API.ExternalGuildBankSorts) then
-      local lowest, id = nil, nil
-      for id, details in pairs(addonTable.API.ExternalGuildBankSorts) do
-        if lowest == nil then
-          lowest, id = details.priority, id
-        elseif details.priority < lowest then
-          lowest, id = details.priority, id
-        end
-      end
-      addonTable.Config.Set("guild_bank_sort_method", id)
-    elseif method ~= "none" and method ~= "unset" then
-      addonTable.Config.ResetOne("guild_bank_sort_method")
-    end
-  end
 end
 
 function addonTable.Utilities.GetBagType(bagID, itemID)
@@ -275,4 +355,24 @@ function addonTable.Utilities.GetSpacing()
   end
 
   return sideSpacing, topSpacing
+end
+
+addonTable.Utilities.MasqueRegistration = function() end
+
+if LibStub then
+  -- Establish a reference to Masque.
+  local Masque, MSQ_Version = LibStub("Masque", true)
+  if Masque ~= nil then
+    -- Retrieve a reference to a new or existing group.
+    local masqueGroup = Masque:Group(BAGANATOR_L_BAGANATOR_NAME, BAGANATOR_L_CATEGORY_BAG)
+
+    addonTable.Utilities.MasqueRegistration = function(button)
+      if button.masqueApplied then
+        masqueGroup:ReSkin(button)
+      else
+        button.masqueApplied = true
+        masqueGroup:AddButton(button, nil, "Item")
+      end
+    end
+  end
 end

@@ -5,7 +5,6 @@
 --- This file is part of addon Kaliel's Tracker.
 
 local addonName, KT = ...
-KT.forcedUpdate = false
 
 local ACD = LibStub("MSA-AceConfigDialog-3.0")
 local ACR = LibStub("AceConfigRegistry-3.0")
@@ -108,6 +107,8 @@ local defaults = {
         questDefaultActionMap = true,
 		questShowTags = true,
 		questShowZones = true,
+		taskShowFactions = true,
+		questAutoFocusClosest = true,
 
 		messageQuest = true,
 		messageAchievement = true,
@@ -493,13 +494,11 @@ local options = {
 							values = WidgetLists.statusbar,
 							set = function(_, value)
 								db.progressBar = value
-								KT.forcedUpdate = true
-								OTF:Update()
+								KT:Update(true)
 								-- TODO: Update
 								--[[if PetTracker then
 									PetTracker.Objectives:Update()
 								end]]
-								KT.forcedUpdate = false
 							end,
 							order = 2.9,
 						},
@@ -518,14 +517,12 @@ local options = {
 							values = WidgetLists.font,
 							set = function(_, value)
 								db.font = value
-								KT.forcedUpdate = true
-								KT:SetText()
-								OTF:Update()
+								KT:SetText(true)
+								KT:Update()
 								-- TODO: Update
 								--[[if PetTracker then
 									PetTracker.Objectives:Update()
 								end]]
-								KT.forcedUpdate = false
 							end,
 							order = 3.1,
 						},
@@ -537,14 +534,12 @@ local options = {
 							step = 1,
 							set = function(_, value)
 								db.fontSize = value
-								KT.forcedUpdate = true
-								KT:SetText()
-								OTF:Update()
+								KT:SetText(true)
+								KT:Update()
 								-- TODO: Update
 								--[[if PetTracker then
 									PetTracker.Objectives:Update()
 								end]]
-								KT.forcedUpdate = false
 							end,
 							order = 3.2,
 						},
@@ -561,14 +556,12 @@ local options = {
 							end,
 							set = function(_, value)
 								db.fontFlag = value
-								KT.forcedUpdate = true
-								KT:SetText()
-								OTF:Update()
+								KT:SetText(true)
+								KT:Update()
 								-- TODO: Update
 								--[[if PetTracker then
 									PetTracker.Objectives:Update()
 								end]]
-								KT.forcedUpdate = false
 							end,
 							order = 3.3,
 						},
@@ -604,9 +597,7 @@ local options = {
 							type = "toggle",
 							set = function()
 								db.textWordWrap = not db.textWordWrap
-								KT.forcedUpdate = true
-								OTF:Update()
-								KT.forcedUpdate = false
+								KT:Update(true)
 							end,
 							order = 3.6,
 						},
@@ -1077,14 +1068,14 @@ local options = {
 							order = 6.12,
 						},
 						tooltipTitle = {
-							name = "\n"..cTitle.."滑鼠提示",
+							name = "\n"..cTitle.."浮動提示資訊",
 							type = "description",
 							fontSize = "medium",
 							order = 6.2,
 						},
 						tooltipShow = {
-							name = "顯示滑鼠提示",
-							desc = "顯示任務/世界任務/成就/事件的滑鼠提示。",
+							name = "顯示浮動提示資訊",
+							desc = "顯示任務/世界任務/成就/事件的浮動提示資訊。",
 							type = "toggle",
 							set = function()
 								db.tooltipShow = not db.tooltipShow
@@ -1093,7 +1084,7 @@ local options = {
 						},
 						tooltipShowRewards = {
 							name = "顯示獎勵",
-							desc = "在滑鼠提示內顯示任務獎勵 - 神兵之力、職業大廳資源、金錢、裝備...等。",
+							desc = "在浮動提示資訊內顯示任務獎勵 - 神兵之力、職業大廳資源、金錢、裝備...等。",
 							type = "toggle",
 							disabled = function()
 								return not db.tooltipShow
@@ -1105,7 +1096,7 @@ local options = {
 						},
 						tooltipShowID = {
 							name = "顯示 ID",
-							desc = "在滑鼠提示內顯示任務/世界任務/成就的 ID。",
+							desc = "在浮動提示資訊內顯示任務/世界任務/成就的 ID。",
 							type = "toggle",
 							disabled = function()
 								return not db.tooltipShow
@@ -1166,6 +1157,7 @@ local options = {
 							name = "顯示任務標籤",
 							desc = "在任務追蹤清單中顯示/隱藏任務標籤 (任務等級、任務類型)。",
 							type = "toggle",
+							width = "normal+half",
 							set = function()
 								db.questShowTags = not db.questShowTags
 								OTF:Update()
@@ -1176,16 +1168,29 @@ local options = {
 							name = "顯示任務區域",
 							desc = "在任務追蹤清單中顯示/隱藏任務區域。",
 							type = "toggle",
+							width = "normal+half",
 							set = function()
 								db.questShowZones = not db.questShowZones
 								OTF:Update()
 							end,
 							order = 6.43,
 						},
+						taskShowFactions = {
+							name = "顯示世界任務陣營",
+							desc = "顯示/隱藏追蹤清單中的世界任務的陣營。",
+							type = "toggle",
+							width = "normal+half",
+							set = function()
+								db.taskShowFactions = not db.taskShowFactions
+								OTF:Update()
+							end,
+							order = 6.44,
+						},
 						questAutoTrack = {
 							name = "自動追蹤新任務",
 							desc = "接受任務時自動追蹤任務，使用遊戲內建的 \"autoQuestWatch\" 參數值。\n"..warning,
 							type = "toggle",
+							width = "normal+half",
 							confirm = true,
 							confirmText = warning,
 							get = function()
@@ -1195,7 +1200,7 @@ local options = {
 								SetCVar("autoQuestWatch", value)
 								ReloadUI()
 							end,
-							order = 6.44,
+							order = 6.45,
 						},
 						questProgressAutoTrack = {
 							name = "自動追蹤任務進度",
@@ -1211,7 +1216,22 @@ local options = {
 								SetCVar("autoQuestProgress", value)
 								ReloadUI()
 							end,
-							order = 6.45,
+							order = 6.46,
+						},
+						questAutoFocusClosest = {
+							name = "自動將最近的任務設為焦點                            ",  -- space for a wider tooltip
+							desc = "下列情況會自動將最近的任務設為焦點:\n"..
+									"- 交回設為焦點的任務，\n"..
+									"- 放棄設為焦點的任務，\n"..
+									"- 取消追蹤設為焦點的任務，\n"..
+									"- 取消追蹤設為焦點的世界任務，\n"..
+									"- 手動或自動選擇區域過濾方式時，沒有任何東西設為焦點。",
+							type = "toggle",
+							width = "normal+half",
+							set = function()
+								db.questAutoFocusClosest = not db.questAutoFocusClosest
+							end,
+							order = 6.47,
 						},
 					},
 				},
@@ -1425,7 +1445,7 @@ local options = {
 									"啟用駭客工具時按鈕可以正常使用，不會發生錯誤。停用時將無法使用按鈕。\n\n"..
 									cWarning2.."負面影響:|r\n"..
 									"- 建立預組隊伍的對話框中會隱藏 \"目標\" 項目。\n"..
-									"- 預組隊伍列表中項目的滑鼠提示會隱藏第二行 (綠色) 的 \"目標\"。\n"..
+									"- 預組隊伍列表中項目的浮動提示資訊會隱藏第二行 (綠色) 的 \"目標\"。\n"..
 									"- 建立預組隊伍的對話框不會自動設定好 \"標題\"，\n"..
 									"  例如 M+ 鑰石層數。\n",
 							descStyle = "inline",

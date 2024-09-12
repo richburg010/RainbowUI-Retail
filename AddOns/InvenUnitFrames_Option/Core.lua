@@ -1,4 +1,5 @@
-﻿local IUF = InvenUnitFrames
+﻿if GetLocale()~="zhTW" and GetLocale()~="zhCN" then return end
+local IUF = InvenUnitFrames
 local Option = IUF.optionFrame
 Option:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
 Option:RegisterEvent("ADDON_LOADED")

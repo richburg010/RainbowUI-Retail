@@ -1,4 +1,5 @@
-﻿local IUF = InvenUnitFrames
+﻿if GetLocale()~="zhTW" and GetLocale()~="zhCN" then return end
+local IUF = InvenUnitFrames
 
 local _G = _G
 local pairs = _G.pairs

@@ -17,7 +17,19 @@ function CraftSim.NEWS:GET_NEWS(itemMap)
     local news = {
         f.bb("                   Hello and thank you for using CraftSim!\n"),
         f.bb("                                 ( You are awesome! )"),
-        newP("17.2.1"),
+        newP("17.3.1"),
+        f.p .. "Fixed " .. f.bb("CraftQueue Restock Profit Threshold"),
+        newP("17.3.0"),
+        f.P .. f.bb("Recipe Scan") .. ": " .. f.g("New Feature"),
+        f.a ..
+        "Press " ..
+        CreateAtlasMarkup("NPE_LeftClick", 20, 20, 2) .. " + shift to queue recipe into " .. f.bb("Craft Queue"),
+        f.s .. "Updated " .. f.bb("Specialization Data"),
+        f.s .. f.bb("CraftQueue ") .. "should now support " .. f.e("Spark Reagents"),
+        f.p .. itemMap.enchantingRod:GetItemLink() .. " Concentration Bonus now considered",
+        newP("17.2.3"),
+        f.p .. "Concentration Tracker character name column adaption",
+        newP("17.2.2"),
         f.p .. f.l("ForgeFinder Export") .. " now exports both DF and TWW",
         newP("17.2.0"),
         f.P .. "Added an" .. f.l(" easycraft.io") .. " export",
@@ -76,7 +88,7 @@ end
 ---@async
 function CraftSim.NEWS:ShowNews(force)
     local itemMap = {
-        chocolate = Item:CreateFromItemID(194902),
+        enchantingRod = Item:CreateFromItemID(224116),
     }
     CraftSim.GUTIL:ContinueOnAllItemsLoaded(CraftSim.GUTIL:Map(itemMap, function(i) return i end), function()
         local newsText = CraftSim.NEWS:GET_NEWS(itemMap)

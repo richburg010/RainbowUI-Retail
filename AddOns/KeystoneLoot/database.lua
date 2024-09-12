@@ -1,7 +1,7 @@
 local AddonName, KeystoneLoot = ...;
 
-local dbVersion = 4;
-local dbCharacterVersion = 2;
+local dbVersion = 5;
+local dbCharacterVersion = 3;
 
 
 local function RemoveOldSeason()
@@ -38,6 +38,8 @@ function KeystoneLoot:CheckDB()
 		elseif (KeystoneLootDB.dbVersion == 3) then
 			KeystoneLootDB.showNewText = true;
 			KeystoneLootDB.keystoneItemLevelEnabled = true;
+		elseif (KeystoneLootDB.dbVersion == 4) then
+			KeystoneLootDB.showNewText = true;
 		end
 
 		KeystoneLootDB.dbVersion = KeystoneLootDB.dbVersion + 1;
@@ -62,6 +64,12 @@ function KeystoneLoot:CheckCharacterDB()
 			KeystoneLootCharDB.favoriteLoot = {};
 		elseif (KeystoneLootCharDB.dbVersion == 1) then
 			KeystoneLootCharDB.selectedRaidItemLevel = 0;
+		elseif (KeystoneLootCharDB.dbVersion == 2) then
+			KeystoneLootCharDB.statHighlightingCritEnabled = true;
+			KeystoneLootCharDB.statHighlightingHasteEnabled = true;
+			KeystoneLootCharDB.statHighlightingMasteryEnabled = true;
+			KeystoneLootCharDB.statHighlightingVersatilityEnabled = true;
+			KeystoneLootCharDB.statHighlightingNoStatsEnabled = true;
 		end
 
 		KeystoneLootCharDB.dbVersion = KeystoneLootCharDB.dbVersion + 1;
@@ -88,11 +96,13 @@ function KeystoneLoot:GetFavoriteItemList(challengeModeId)
 
 		for specId, specList in next, favoriteLoot[challengeModeId] do
 			for itemId, itemInfo in next, specList do
-				_tmp[itemId] = {
-					itemId = itemId,
-					specId = specId,
-					icon = itemInfo.icon
-				};
+				if (KeystoneLoot:GetItemInfo(itemId)) then
+					_tmp[itemId] = {
+						itemId = itemId,
+						specId = specId,
+						icon = itemInfo.icon
+					};
+				end
 			end
 		end
 
@@ -101,10 +111,12 @@ function KeystoneLoot:GetFavoriteItemList(challengeModeId)
 		end
 	elseif (favoriteLoot[challengeModeId][specId]) then
 		for itemId, itemInfo in next, favoriteLoot[challengeModeId][specId] do
-			table.insert(_itemList, {
-				itemId = itemId,
-				icon = itemInfo.icon
-			});
+			if (KeystoneLoot:GetItemInfo(itemId)) then
+				table.insert(_itemList, {
+					itemId = itemId,
+					icon = itemInfo.icon
+				});
+			end
 		end
 	end
 

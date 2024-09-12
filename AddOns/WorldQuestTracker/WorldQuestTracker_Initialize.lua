@@ -185,6 +185,7 @@ do
 			},
 
 			world_map_hubscale = {},
+			world_map_hubenabled = {},
 
 			speed_run = {
 				auto_accept = false,
@@ -193,10 +194,14 @@ do
 			},
 
 			disable_world_map_widgets = false, --a
-			show_filter_button = false, --a
+			show_filter_button = true, --a
 			show_sort_button = false, --a
 			show_timeleft_button = true, --a
-			numerate_quests = true,
+			numerate_quests = true, --a
+			show_warband_rep_warning = true, --a
+			show_warband_rep_warning_color = "yellow",
+			show_warband_rep_warning_alpha = 0.834,
+			show_warband_rep_warning_desaturation = 0.5,
 
 			show_emissary_info = true,
 
@@ -334,6 +339,7 @@ do
 	--create the addon object
 	local WorldQuestTracker = DF:CreateAddOn("WorldQuestTrackerAddon", "WQTrackerDB", default_config)
 	WorldQuestTracker.__debug = false
+	WorldQuestTracker.MapChangedTime = time()-1
 
 	--create the group finder and rare finder frames
 	CreateFrame("frame", "WorldQuestTrackerFinderFrame", UIParent, "BackdropTemplate")
@@ -444,8 +450,6 @@ do
 
 	WorldQuestTracker.ChangeLogTable = {}
 end
-
-
 
 --old to new api of wow v11
 --C_Reputation.GetFactionDataByID

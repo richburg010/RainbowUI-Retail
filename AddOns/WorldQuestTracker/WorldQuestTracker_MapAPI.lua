@@ -46,49 +46,48 @@ local triggerScheduledWidgetUpdate = function(timerObject)
 		return
 	end
 
-	if (HaveQuestRewardData (questID)) then
+	if (HaveQuestRewardData(questID)) then
 		--is a zone widget placed in the world hub
 		if (widget.IsWorldZoneQuestButton) then
-			WorldQuestTracker.SetupWorldQuestButton (widget, true)
+			WorldQuestTracker.SetupWorldQuestButton(widget, true)
 
 		--is a square button in the world map
 		elseif (widget.IsWorldQuestButton) then
-			WorldQuestTracker.UpdateWorldWidget (widget, true)
+			WorldQuestTracker.UpdateWorldWidget(widget, widget.questData)
 
 		--is a zone widget placed in the zone
 		elseif (widget.IsZoneQuestButton) then
-			WorldQuestTracker.SetupWorldQuestButton (widget, true)
+			WorldQuestTracker.SetupWorldQuestButton(widget, true)
 
 		--is a zone widget placed in the taxi map
 		elseif (widget.IsTaxiQuestButton) then
-			WorldQuestTracker.SetupWorldQuestButton (widget, true)
+			WorldQuestTracker.SetupWorldQuestButton(widget, true)
 
 		--is a zone widget placed in the zone summary frame
 		elseif (widget.IsZoneSummaryButton) then
-			WorldQuestTracker.SetupWorldQuestButton (widget, true)
-
+			WorldQuestTracker.SetupWorldQuestButton(widget, true)
 		end
 	else
-		WorldQuestTracker.CheckQuestRewardDataForWidget (widget, false, true)
+		WorldQuestTracker.CheckQuestRewardDataForWidget(widget, false, true)
 	end
 end
 
-function WorldQuestTracker.CheckQuestRewardDataForWidget (widget, noScheduleRefresh, noRequestData)
+function WorldQuestTracker.CheckQuestRewardDataForWidget(widget, noScheduleRefresh, noRequestData)
 	local questID = widget.questID
 
 	if (not questID) then
 		return false
 	end
 
-	if (not HaveQuestRewardData (questID)) then
+	if (not HaveQuestRewardData(questID)) then
 		--if this is from a re-schedule it already requested the data
 		if (not noRequestData) then
 			--ask que server for the reward data
-			C_TaskQuest.RequestPreloadRewardData (questID)
+			C_TaskQuest.RequestPreloadRewardData(questID)
 		end
 
 		if (not noScheduleRefresh) then
-			local timer = C_Timer.NewTimer (1, triggerScheduledWidgetUpdate)
+			local timer = C_Timer.NewTimer(1, triggerScheduledWidgetUpdate)
 			timer.widget = widget
 			return false, true
 		end
@@ -157,6 +156,21 @@ function WorldQuestTracker.IsNewEXPZone (mapID)
 		return true
 	end
 	--]=]
+end
+
+---return if the quest is a warband quest and if the quest give reputation
+---@param questID number
+---@param factionID number
+---@return boolean, boolean
+function WorldQuestTracker.GetQuestWarbandInfo(questID, factionID)
+	local bWarband = WorldQuestTracker.MapData.FactionHasWarbandReputation[factionID]
+	if (bWarband) then
+		if (C_QuestLog.DoesQuestAwardReputationWithFaction(questID or 0, factionID or 0)) then
+			return true, true --is warband and give reputation
+		end
+		return true, false --is warband but don't give reputation
+	end
+	return false, false --not warband
 end
 
 --is the current map zone a world quest hub?
@@ -272,29 +286,60 @@ function WorldQuestTracker.HasCachedQuestData(questID)
 	end
 end
 
+local cacheDebug = -1
+local questIDtoDebug = -1
+local bCacheEnabled = false
+function WorldQuestTracker.GetOrLoadQuestData(questID, canCache, dontCatchAP) --func
+	if (questIDtoDebug == questID) then
+		WorldQuestTracker:Msg("=== GetOrLoadQuestData() called ===")
+	end
 
-function WorldQuestTracker.GetOrLoadQuestData(questID, canCache, dontCatchAP)
 	local data = WorldQuestTracker.CachedQuestData[questID]
 	if (data) then
+		if (questIDtoDebug == questID) then
+			WorldQuestTracker:Msg("(debug) GetOrLoadQuestData(): quest data was cached")
+		end
+		if (cacheDebug == questID) then
+			print("RESTORING FROM CACHE")
+			print(unpack(data))
+		end
 		return unpack(data)
 	end
 
 	local gold, goldFormated = WorldQuestTracker.GetQuestReward_Gold(questID)
+	if (questIDtoDebug == questID) then
+		WorldQuestTracker:Msg("(debug) GetOrLoadQuestData(): gold:", gold, goldFormated)
+	end
+
 	local rewardName, rewardTexture, numRewardItems = WorldQuestTracker.GetQuestReward_Resource(questID)
+	if (questIDtoDebug == questID) then
+		WorldQuestTracker:Msg("(debug) GetOrLoadQuestData(): rewardName:", rewardName, rewardTexture, numRewardItems)
+	end
+
 	local title, factionID, tagID, tagName, worldQuestType, questQuality, isElite, tradeskillLineIndex, arg1, arg2 = WorldQuestTracker.GetQuest_Info(questID)
+	if (questIDtoDebug == questID) then
+		WorldQuestTracker:Msg("(debug) GetOrLoadQuestData(): info:", title, factionID, tagID, tagName, worldQuestType, questQuality, isElite, tradeskillLineIndex, arg1, arg2)
+	end
 
 	local itemName, itemTexture, itemLevel, itemQuantity, itemQuality, isUsable, itemID, isArtifact, artifactPower, isStackable, stackAmount, conduitType, borderTexture, borderColor, itemLink
 	if (not dontCatchAP) then
 		itemName, itemTexture, itemLevel, itemQuantity, itemQuality, isUsable, itemID, isArtifact, artifactPower, isStackable, stackAmount, conduitType, borderTexture, borderColor, itemLink = WorldQuestTracker.GetQuestReward_Item (questID)
 	end
+	if (questIDtoDebug == questID) then
+		WorldQuestTracker:Msg("(debug) GetOrLoadQuestData(): item:", itemName, itemTexture, itemLevel, itemQuantity, itemQuality, isUsable, itemID, isArtifact, artifactPower, isStackable, stackAmount, conduitType, borderTexture, borderColor)
+	end
 
 	local allowDisplayPastCritical = false
 
-	if (WorldQuestTracker.CanCacheQuestData and canCache) then
-		WorldQuestTracker.CachedQuestData[questID] = {title, factionID, tagID, tagName, worldQuestType, questQuality, isElite, tradeskillLineIndex, tagID, tagName, worldQuestType, questQuality, isElite, tradeskillLineIndex, allowDisplayPastCritical, gold, goldFormated, rewardName, rewardTexture, numRewardItems, itemName, itemTexture, itemLevel, itemQuantity, itemQuality, isUsable, itemID, isArtifact, artifactPower, isStackable, stackAmount} --31 indexes
+	if (WorldQuestTracker.CanCacheQuestData and canCache and bCacheEnabled) then
+		if (cacheDebug == questID) then
+			print("ADD TO CACHE")
+			print(title, factionID, tagID, tagName, worldQuestType, questQuality, isElite, tradeskillLineIndex, allowDisplayPastCritical, gold, goldFormated, rewardName, rewardTexture, numRewardItems, itemName, itemTexture, itemLevel, itemQuantity, itemQuality, isUsable, itemID, isArtifact, artifactPower, isStackable, stackAmount)
+		end
+		WorldQuestTracker.CachedQuestData[questID] = {title, factionID, tagID, tagName, worldQuestType, questQuality, isElite, tradeskillLineIndex, allowDisplayPastCritical, gold, goldFormated, rewardName, rewardTexture, numRewardItems, itemName, itemTexture, itemLevel, itemQuantity, itemQuality, isUsable, itemID, isArtifact, artifactPower, isStackable, stackAmount} --31 indexes
 	end
 
-	return title, factionID, tagID, tagName, worldQuestType, questQuality, isElite, tradeskillLineIndex, tagID, tagName, worldQuestType, questQuality, isElite, tradeskillLineIndex, allowDisplayPastCritical, gold, goldFormated, rewardName, rewardTexture, numRewardItems, itemName, itemTexture, itemLevel, itemQuantity, itemQuality, isUsable, itemID, isArtifact, artifactPower, isStackable, stackAmount, conduitType, borderTexture, borderColor
+	return title, factionID, tagID, tagName, worldQuestType, questQuality, isElite, tradeskillLineIndex, allowDisplayPastCritical, gold, goldFormated, rewardName, rewardTexture, numRewardItems, itemName, itemTexture, itemLevel, itemQuantity, itemQuality, isUsable, itemID, isArtifact, artifactPower, isStackable, stackAmount, conduitType, borderTexture, borderColor
 end
 
 function WorldQuestTracker.GetCurrentStandingMapAreaID()
@@ -331,8 +376,46 @@ function WorldQuestTracker.GetCurrentMapAreaID()
 	end
 end
 
-function WorldQuestTracker.CanShowQuest (info)
-	local canShowQuest = WorldQuestTracker.DataProvider:ShouldShowQuest (info)
+---@param mapID number
+---@return boolean
+function WorldQuestTracker.DoesMapHasWorldQuests(mapID)
+	return WorldQuestTracker.MapData.WorldQuestZones[mapID] and true or false
+end
+
+function WorldQuestTracker.PreloadWorldQuestsForQuestHub(questHubMapId)
+	if (questHubMapId) then
+		--get the zones of this quest hub
+		local zones = WorldQuestTracker.mapTables
+		for mapID, zoneInfo in pairs(zones) do
+			if (zoneInfo.show_on_map[questHubMapId]) then
+				WorldQuestTracker.PreloadWorldQuestsForMap(mapID)
+			end
+		end
+	end
+end
+
+function WorldQuestTracker.PreloadWorldQuestsForMap(mapID)
+	if (WorldQuestTracker.DoesMapHasWorldQuests(mapID)) then
+		local taskInfo = GetQuestsForPlayerByMapID(mapID)
+		if (taskInfo and #taskInfo > 0) then
+			for i, info in ipairs(taskInfo) do
+				local questID = info.questId
+				local bIsWorldQuest = isWorldQuest(questID)
+				if (bIsWorldQuest) then
+					if (not HaveQuestData(questID) or not HaveQuestRewardData(questID)) then
+						C_Timer.After(RandomFloatInRange(0.1, 2), function()
+							C_TaskQuest.RequestPreloadRewardData(questID)
+						end)
+					end
+				end
+			end
+		end
+	end
+end
+
+--not in use
+function WorldQuestTracker.CanShowQuest(info)
+	local canShowQuest = WorldQuestTracker.DataProvider:ShouldShowQuest(info)
 	return canShowQuest
 end
 
